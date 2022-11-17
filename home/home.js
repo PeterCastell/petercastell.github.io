@@ -1,7 +1,7 @@
 function setup() {
   createCanvas(windowWidth, windowHeight);
   document.body.style.background = '#36393F';
-  
+  document.title = "Peter's SHAD Website";
   button1 = new Button('../blob-text', 'Inky Text');
   button2 = new Button('../plane-game', 'Plane Flight');
 }
