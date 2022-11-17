@@ -67,6 +67,5 @@ class Button {
     if(this.hovered) {
       location.href = this.link;
     }
-    console.log(link);
   }
 }
