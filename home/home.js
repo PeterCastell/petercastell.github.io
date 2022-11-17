@@ -30,6 +30,8 @@ function draw() {
   x += cos(a) * d;
   y += sin(a) * d;
   text("Peter's SHAD Website", x, y);
+  textSize(30);
+  text("My name is Peter and I like to\nprogram games, visuals, and various\nother small projects to experiment.", width/2, height-200);
   
   button1.draw(width/2, height/2);
   button2.draw(width/2, height/2+80);
