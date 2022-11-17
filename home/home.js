@@ -3,7 +3,7 @@ function setup() {
   document.body.style.background = '#36393F';
   
   button1 = new Button('../blob-text', 'Inky Text');
-  button2 = new Button('../boat-game', 'Plane Flight');
+  button2 = new Button('../plane-game', 'Plane Flight');
 }
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
