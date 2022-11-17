@@ -71,7 +71,7 @@ function preload() {
   img3 = loadImage("distMap3.png");
 }
 function setup() {
-  document.title = "I DID THIS";
+  document.title = "Inky Text";
   createCanvas(windowWidth, windowHeight, WEBGL);
   document.getElementById('defaultCanvas0').style.cursor = "none";
   theShader = createShader(vert, frag);
