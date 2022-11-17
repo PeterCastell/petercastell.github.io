@@ -31,7 +31,7 @@ function draw() {
   y += sin(a) * d;
   text("Peter's SHAD Website", x, y);
   textSize(30);
-  text("My name is Peter and I like to\nprogram games, visuals, and various\nother small projects to experiment.", width/2, height-200);
+  text("My name is Peter and I like to\nprogram games, visuals, and various\nother small projects as experiments.", width/2, height-100);
   
   button1.draw(width/2, height/2);
   button2.draw(width/2, height/2+80);
