@@ -232,6 +232,7 @@ var coins = [];
 var time = 0;
 let plane;
 function setup() {
+  document.title = 'Plane Game';
   createCanvas(windowWidth, windowHeight, WEBGL);
   theShader = createShader(vert, frag);
   for(let i = 0; i < 10; i++) {
