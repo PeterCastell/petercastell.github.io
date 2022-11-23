@@ -657,7 +657,7 @@ function lerpAngle(a, b, v) {
 
 function windowResized() {
   resizeCanvas(window.innerWidth, window.innerHeight);
-  screenScale = screen.width / 768;
+  screenScale = screen.height / 768;
   sbGraphics = createGraphics(width, 30*screenScale, P2D);
   inactiveText = createGraphics(width, height, P2D);
   if(plane.x > width) {
