@@ -374,7 +374,7 @@ function setup() {
 }
 function loadScore() {
   score = localStorage.getItem('plane-game-score');
-  let s = (score == null? 0: score);
+  let s = (score = (score == null? 0: score));
   let i = 0;
   while(s > 0) {
     let c = s % 3;
