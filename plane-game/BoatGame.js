@@ -32,6 +32,7 @@ uniform float uNumMissiles;
 uniform sampler2D uInactive;
 uniform float uActiveFade;
 uniform bool uPlaneDead;
+uniform float uScreenScale;
 
 vec4 exactTexture2D(sampler2D tex, vec2 size, vec2 pix) {
   vec2 halfPix = 0.5/size;
@@ -91,7 +92,7 @@ float p4(float n) {
   return n*n*n*n;
 }
 void background() {
-  float n = octaveNoise((gl_FragCoord.xy-uBGPos)/100.+vec2(-1000, 1000));
+  float n = octaveNoise((gl_FragCoord.xy-uBGPos)/(100.*uScreenScale)+vec2(-100, 100));
   vec3 color;
   if(n < 0.35) {
     color = vec3(0.0, 0.0, n+0.5);
@@ -113,8 +114,8 @@ void coins() {
   if(uNumCoins < 1.0) {
     return;
   }
-  const float cw1 = 20.;
-  const float cw2 = 5.;
+  float cw1 = 20.*uScreenScale;
+  float cw2 = 5.*uScreenScale;
   const vec4 lightGold = vec4(236./255.,186./255.,74./255., 1.0);
   const vec4 darkGold = vec4(170./255.,108./255.,57./255., 1.0);
   vec2 st = gl_FragCoord.xy;
@@ -186,6 +187,7 @@ void missiles() {
     coord = vec2(coord.x*cos(-a) - coord.y*sin(-a), coord.y*cos(-a) + coord.x*sin(-a));
     coord = coord/uResolution*(uResolution/vec2(120, 58));
     coord *= 2.;
+    coord /= uScreenScale;
     coord += 0.5;
     if(coord.x > 0. && coord.y > 0. && coord.x < 1. && coord.y < 1.) {
       vec4 col = texture2D(uMissile, coord);
@@ -199,6 +201,7 @@ void particles() {
     return;
   }
   vec2 st = gl_FragCoord.xy;
+  float bounds = 50.*uScreenScale;
   for(float p = 0.; p < ${MaxParticles}.; p++) {
     if(p == uNumParticles) {
       return;
@@ -206,7 +209,7 @@ void particles() {
     vec2 size = vec2(6, ${MaxParticles});
     float x = valueFromTexture2D(uParticles, size, vec2(0, p));
     float y = valueFromTexture2D(uParticles, size, vec2(1, p));
-    if(abs(st.x-x) < 50.0 && abs(st.y-y) < 50.0) {
+    if(abs(st.x-x) < bounds && abs(st.y-y) < bounds) {
       float t = valueFromTexture2D(uParticles, size, vec2(2, p));
       float s = valueFromTexture2D(uParticles, size, vec2(3, p));
       float sp = valueFromTexture2D(uParticles, size, vec2(4, p));
@@ -221,9 +224,10 @@ void particles() {
         float speed = random(vec2(x+i, y+10.)*s)*sp+sp;
         float size = random(vec2(x+i, y+15.)*s)*5.+5.;
         float distance = 1.-(1./exp2(t/15.));
+        distance *= uScreenScale;
         float px = cos(angle)*distance*speed;
         float py = sin(angle)*distance*speed;
-        if(sq(px+x-st.x)+sq(py+y-st.y) < sq(size*scale)) {
+        if(sq(px+x-st.x)+sq(py+y-st.y) < sq(size*scale*uScreenScale)) {
           gl_FragColor = col;
           return;
         }
@@ -240,6 +244,7 @@ void plane() {
   coord -= uPlanePos;
   coord = coord/uResolution*(uResolution/vec2(225, 225));
   coord *= 1.5;
+  coord /= uScreenScale;
   coord = vec2(coord.x*cos(a) - coord.y*sin(a), coord.y*cos(a) + coord.x*sin(a));
   vec2 propCoord = coord / vec2(1, sin(uTime/2.)*1.2);
   coord += 0.5;
@@ -252,22 +257,24 @@ void plane() {
   }
   if(fract(uTime / 80.) < 0.05) {
     vec2 right = vec2(8, 35);
+    right *= uScreenScale;
     right = vec2(right.x*cos(-a) - right.y*sin(-a), right.y*cos(-a) + right.x*sin(-a));
     right += uPlanePos;
     float d = sqrt(sq(gl_FragCoord.x-right.x) + sq(gl_FragCoord.y-right.y));
-    d = sq(15.) /  sq(d+15.);
+    d = sq(15.*uScreenScale) /  sq(d+15.*uScreenScale);
     gl_FragColor = d*vec4(0.8, 0.0, 0.0, 1.0) + (1.-d)*gl_FragColor;
     
     vec2 left = vec2(8, -35);
+    left *= uScreenScale;
     left = vec2(left.x*cos(-a) - left.y*sin(-a), left.y*cos(-a) + left.x*sin(-a));
     left += uPlanePos;
     d = sqrt(sq(gl_FragCoord.x-left.x) + sq(gl_FragCoord.y-left.y));
-    d = sq(15.) /  sq(d+15.);
+    d = sq(15.*uScreenScale) /  sq(d+15.*uScreenScale);
     gl_FragColor = d*vec4(0.0, 0.8, 0.0, 1.0) + (1.-d)*gl_FragColor;
   }
 }
 void scoreboard() {
-  vec2 coord = gl_FragCoord.xy/uResolution*vec2(1., uResolution.y/30.);
+  vec2 coord = gl_FragCoord.xy/uResolution*vec2(1., uResolution.y/(30.*uScreenScale));
   coord = vec2(coord.x, 1.-coord.y);
   if(coord.y > 0.) {
     vec4 col = texture2D(uScoreboard, coord);
@@ -311,6 +318,21 @@ var missileSpawn;
 var active = false;
 var inactiveText;
 var activeFade = 0;
+let score;
+let pointCoins = [];
+let pointColors = [
+  'red',
+  'orange',
+  'yellow',
+  'lime',
+  'cyan',
+  'blue',
+  'purple',
+  'magenta',
+  'black'
+];
+let sbGraphics;
+let screenScale;
 
 function resetGame() {
   time = 0;
@@ -324,7 +346,6 @@ function resetGame() {
     propImg: loadImage('plane_prop.png'),
     dead: -1
   };
-  score = 0;
   pointCoins = [];
   loadScore();
   loadDifficulty();
@@ -333,7 +354,8 @@ function resetGame() {
   missileSpawn = 300;
 }
 function setup() {
-  createCanvas(windowWidth, windowHeight, WEBGL);
+  createCanvas(window.innerWidth, window.innerHeight, WEBGL);
+  screenScale = screen.height/768;
   document.title = "Plane Game";
   frameRate(30);
   theShader = createShader(vert, frag);
@@ -343,7 +365,7 @@ function setup() {
   resetGame();
   
   missileImg = loadImage('missile.png');
-  sbGraphics = createGraphics(width, 30, P2D);
+  sbGraphics = createGraphics(width, 30*screenScale, P2D);
   inactiveText = createGraphics(width, height, P2D);
   
   PAImg = new ArrayImage(6, MaxParticles);
@@ -352,7 +374,7 @@ function setup() {
 }
 function loadScore() {
   score = localStorage.getItem('plane-game-score');
-  let s = score;
+  let s = (score == null? 0: score);
   let i = 0;
   while(s > 0) {
     let c = s % 3;
@@ -366,6 +388,7 @@ function loadScore() {
 }
 function loadDifficulty() {
   difficulty = localStorage.getItem('plane-game-difficulty');
+  difficulty = (difficulty == null? 0: difficulty);
 }
 function keyPressed() {
   active = !active;
@@ -447,10 +470,10 @@ function draw() {
     if(plane.dead == -1) {
       let mouse = {x: mouseX, y: mouseY};
       plane.a = lerpAngle(plane.a, atan2(mouse.y-plane.y, mouse.x-plane.x), 0.05);
-      plane.x += cos(plane.a) * 5;
-      plane.y += sin(plane.a) * 5;
-      plane.bgx -= cos(plane.a) * 0.5;
-      plane.bgy -= sin(plane.a) * 0.5;
+      plane.x += cos(plane.a) * 5*screenScale;
+      plane.y += sin(plane.a) * 5*screenScale;
+      plane.bgx -= cos(plane.a) * 0.5*screenScale;
+      plane.bgy -= sin(plane.a) * 0.5*screenScale;
       const planeMargin = 20;
       if(plane.x < -planeMargin) {
         plane.x = width+planeMargin;
@@ -477,7 +500,7 @@ function draw() {
             addPointCoin(0);
           }
         }
-        else if(sq(plane.x-coins[i].x) + sq(plane.y-(height-coins[i].y)) < sq(45)) {
+        else if(sq(plane.x-coins[i].x) + sq(plane.y-(height-coins[i].y)) < sq(50*screenScale)) {
           for(let j = 0; j < 5; j++) {
             let a = random(0, TWO_PI);
             let d = random(5, 15);
@@ -492,17 +515,13 @@ function draw() {
           missiles.splice(i, 1);
           continue;
         }
-        if(sq(plane.x-missiles[i].x) + sq(plane.y-(height-missiles[i].y)) < sq(45)) {
+        if(sq(plane.x-missiles[i].x) + sq(plane.y-(height-missiles[i].y)) < sq(45*screenScale)) {
           for(let j = 0; j < 5; j++) {
             let a = random(0, TWO_PI);
             let d = random(5, 15);
             particles.push(newParticle(missiles[i].x+cos(a)*d, missiles[i].y + sin(a)*d, 25, color(0)));
           }
           missiles.splice(i, 1);
-          score = 0;
-          difficulty = 0;
-          localStorage.setItem('plane-game-score', score);
-          localStorage.setItem('plane-game-difficulty', difficulty);
           plane.dead = 0;
         }
       }
@@ -510,6 +529,10 @@ function draw() {
     else {
       plane.dead++;
       if(plane.dead == 60) {
+        score = 0;
+        difficulty = 0;
+        localStorage.setItem('plane-game-score', score);
+        localStorage.setItem('plane-game-difficulty', difficulty);
         resetGame();
       }
     }
@@ -517,15 +540,15 @@ function draw() {
       for(let i = missiles.length-1; i >= 0; i--) {
         if(missiles[i].t < 80) {
           missiles[i].a = lerpAngle(missiles[i].a, atan2((height-plane.y)-missiles[i].y, plane.x-missiles[i].x), 0.05);
-          missiles[i].x += cos(missiles[i].a)*2;
-          missiles[i].y += sin(missiles[i].a)*2;
+          missiles[i].x += cos(missiles[i].a)*2*screenScale;
+          missiles[i].y += sin(missiles[i].a)*2*screenScale;
           if(missiles[i].t % 5 == 0) {
             particles.push(newParticle(missiles[i].x, missiles[i].y, 20, color(0)));
           }
         }
         else {
-          missiles[i].x += cos(missiles[i].a)*10;
-          missiles[i].y += sin(missiles[i].a)*10;
+          missiles[i].x += cos(missiles[i].a)*10*screenScale;
+          missiles[i].y += sin(missiles[i].a)*10*screenScale;
           if(missiles[i].t % 3 == 0) {
             particles.push(newParticle(missiles[i].x, missiles[i].y, 10, color(0)));
           }
@@ -574,12 +597,13 @@ function draw() {
   theShader.setUniform('uPlaneProp', plane.propImg);
   theShader.setUniform('uPlaneAngle', plane.a);
   theShader.setUniform('uPlaneDead', plane.dead != -1);
+  theShader.setUniform('uScreenScale', screenScale);
   
   sbGraphics.noStroke();
   sbGraphics.ellipseMode(CENTER);
   sbGraphics.fill(255);
   sbGraphics.rect(0, 0, sbGraphics.width, sbGraphics.height);
-  let x = 15;
+  let x = 15*screenScale;
   for(let i = pointCoins.length-1; i >= 0 ; i--) {
     x += pointCoins[i].draw(sbGraphics, x);
   }
@@ -590,17 +614,17 @@ function draw() {
       addPointCoin(ind + 1);
     }
   }
-  sbGraphics.textSize(25);
+  sbGraphics.textSize(25*screenScale);
   sbGraphics.fill(pointColors[floor(max(log3(score), 0))]);
   sbGraphics.textAlign(RIGHT, CENTER);
-  sbGraphics.text(""+score, width-5, 15);
+  sbGraphics.text(""+score, width-5*screenScale, 15*screenScale);
   theShader.setUniform('uScoreboard', sbGraphics);
   
   inactiveText.fill(255);
   inactiveText.textAlign(CENTER, CENTER);
-  inactiveText.textSize(30);
-  inactiveText.text("This game demonstrates GPU shaders\nas well as other game elements", width/2, 200);
-  inactiveText.text("Collect the coins while avoiding the missiles.\n\nPress any key to play or pause.", width/2, height-200);
+  inactiveText.textSize(30*screenScale);
+  inactiveText.text("This game demonstrates GPU shaders\nas well as other game elements", width/2, 200*screenScale);
+  inactiveText.text("Collect the coins while avoiding the missiles.\n\nPress any key to play or pause.", width/2, height-200*screenScale);
   theShader.setUniform('uInactive', inactiveText);
   theShader.setUniform('uActiveFade', activeFade);
   
@@ -632,8 +656,9 @@ function lerpAngle(a, b, v) {
 }
 
 function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-  sbGraphics = createGraphics(width, 30, P2D);
+  resizeCanvas(window.innerWidth, window.innerHeight);
+  screenScale = screen.width / 768;
+  sbGraphics = createGraphics(width, 30*screenScale, P2D);
   inactiveText = createGraphics(width, height, P2D);
   if(plane.x > width) {
     plane.x = width;
@@ -650,20 +675,6 @@ function windowResized() {
     }
   }
 }
-let score = 0;
-let pointCoins = [];
-let pointColors = [
-  'red',
-  'orange',
-  'yellow',
-  'lime',
-  'cyan',
-  'blue',
-  'purple',
-  'magenta',
-  'black'
-];
-let sbGraphics;
 
 function addPointCoin(ind) {
   let count = 0;
@@ -706,8 +717,8 @@ class PointCoin {
   }
   draw(g, x) {
     g.fill(pointColors[this.index]);
-    g.circle(x, 15, 30);
-    return 30;
+    g.circle(x, 15*screenScale, 30*screenScale);
+    return 30*screenScale;
   }
 }
 class PointCoinMerge {
@@ -719,9 +730,9 @@ class PointCoinMerge {
   draw(g, x) {
     this.time++;
     g.fill(pointColors[this.index]);
-    g.circle(x, 15, 30);
-    g.circle(x + 30 - this.time/2, 15, 30);
-    g.circle(x + 60 - this.time, 15, 30);
-    return 90 - this.time;
+    g.circle(x, 15*screenScale, 30*screenScale);
+    g.circle(x + 30*screenScale - (this.time/2)*screenScale, 15*screenScale, 30*screenScale);
+    g.circle(x + 60*screenScale - this.time*screenScale, 15*screenScale, 30*screenScale);
+    return 90*screenScale - this.time*screenScale;
   }
 }
