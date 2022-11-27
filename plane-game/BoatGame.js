@@ -3,6 +3,8 @@ const MaxParticles = 100;
 const MaxCoins = 20;
 const MaxMissiles = 20;
 const ParticlesPerSource = 5;
+const DASHCOOLDOWN = 120;
+const PI = 3.14159265358979;
 
 var vert = `
 attribute vec3 aPosition;
@@ -33,6 +35,8 @@ uniform sampler2D uInactive;
 uniform float uActiveFade;
 uniform bool uPlaneDead;
 uniform float uScreenScale;
+uniform vec2 uMouse;
+uniform float uReload;
 
 vec4 exactTexture2D(sampler2D tex, vec2 size, vec2 pix) {
   vec2 halfPix = 0.5/size;
@@ -81,15 +85,14 @@ float octaveNoise(vec2 x) {
   }
   return v;
 }
-
 float random (vec2 st) {
   return fract(sin(dot(st.xy, vec2(12.9898,78.233)))* 43758.5453123);
 }
+float mix(float x, float y, bool a) {
+  return a ? y : x;
+}
 float sq(float n) {
   return n * n;
-}
-float p4(float n) {
-  return n*n*n*n;
 }
 void background() {
   float n = octaveNoise((gl_FragCoord.xy-uBGPos)/(100.*uScreenScale)+vec2(-100, 100));
@@ -180,7 +183,7 @@ void missiles() {
     float y = valueFromTexture2D(uMissiles, size, vec2(1, m)) - 100.;
     float a = valueFromTexture2D(uMissiles, size, vec2(2, m));
     a /= 10000.;
-    a += 3.14159;
+    a += ${PI};
     
     vec2 coord = gl_FragCoord.xy;
     coord -= vec2(x, y);
@@ -220,7 +223,7 @@ void particles() {
         if(scale <= 0.) {
           continue;
         }
-        float angle = random(vec2(x+i, y+5.)*s)*2.*3.14;
+        float angle = random(vec2(x+i, y+5.)*s)*2.*${PI};
         float speed = random(vec2(x+i, y+10.)*s)*sp+sp;
         float size = random(vec2(x+i, y+15.)*s)*5.+5.;
         float distance = 1.-(1./exp2(t/15.));
@@ -278,6 +281,7 @@ void scoreboard() {
   coord = vec2(coord.x, 1.-coord.y);
   if(coord.y > 0.) {
     vec4 col = texture2D(uScoreboard, coord);
+    col.a *= 0.9;
     gl_FragColor = col.a*col + (1.-col.a)*gl_FragColor;
   }
 }
@@ -293,6 +297,24 @@ void inactive() {
   float alpha = col.a * uActiveFade;
   gl_FragColor = alpha*col + (1.-alpha)*gl_FragColor;
 }
+void cursor() {
+  float r = 10. * uScreenScale;
+  float w = 5. * uScreenScale;
+  float ir = 3. * uScreenScale;
+  vec2 st = gl_FragCoord.xy;
+  if(abs(uMouse.x-st.x) < r + w/2. && abs(uMouse.y-st.y) < r + w/2.) {
+    if(sq(uMouse.x-st.x) + sq(uMouse.y-st.y) < sq(ir)) {
+      gl_FragColor = vec4(0., 0., 0., 1.);
+      return;
+    }
+    if(abs(sqrt(sq(uMouse.x-st.x) + sq(uMouse.y-st.y)) - r) < w/2.) {
+      float a = ${PI}/2. - atan(uMouse.y-st.y, uMouse.x-st.x);
+      if(a+${PI}/2. < 2.*uReload*${PI}/${DASHCOOLDOWN}.) {
+        gl_FragColor = vec4(1., 1., 1., 1.);
+      }
+    }
+  }
+}
 
 void main() {
   background();
@@ -302,6 +324,7 @@ void main() {
   plane();
   scoreboard();
   inactive();
+  cursor();
 }
 `;
 
@@ -331,8 +354,8 @@ let pointColors = [
   'magenta',
   'black'
 ];
-let sbGraphics;
-let screenScale;
+var sbGraphics;
+var screenScale;
 
 function resetGame() {
   time = 0;
@@ -344,7 +367,11 @@ function resetGame() {
     bgy: 0,
     img: loadImage('plane.png'),
     propImg: loadImage('plane_prop.png'),
-    dead: -1
+    dead: -1,
+    dash: false,
+    dcd: 0,
+    dvx: 0,
+    dvy: 0
   };
   pointCoins = [];
   loadScore();
@@ -357,6 +384,7 @@ function setup() {
   createCanvas(window.innerWidth, window.innerHeight, WEBGL);
   screenScale = screen.height/768;
   document.title = "Plane Game";
+  document.getElementById('defaultCanvas0').style.cursor = "none";
   frameRate(30);
   theShader = createShader(vert, frag);
   for(let i = 0; i < 10; i++) {
@@ -389,6 +417,14 @@ function loadScore() {
 function loadDifficulty() {
   difficulty = localStorage.getItem('plane-game-difficulty');
   difficulty = (difficulty == null? 0: difficulty);
+}
+function mousePressed() {
+  if(active && plane.dcd <= 0) {
+    plane.dash = true;
+    plane.dcd = DASHCOOLDOWN;
+    plane.dvx = cos(plane.a)*20*screenScale;
+    plane.dvy = sin(plane.a)*20*screenScale;
+  }
 }
 function keyPressed() {
   active = !active;
@@ -462,7 +498,7 @@ function draw() {
     missileSpawn--;
     if(missileSpawn <= 0) {
       missiles.push(newMissile());
-      const s = 100;
+      const s = 50;
       difficulty++;
       localStorage.setItem('plane-game-difficulty', difficulty);
       missileSpawn = 60*3*s/(difficulty+s);
@@ -470,6 +506,18 @@ function draw() {
     if(plane.dead == -1) {
       let mouse = {x: mouseX, y: mouseY};
       plane.a = lerpAngle(plane.a, atan2(mouse.y-plane.y, mouse.x-plane.x), 0.05);
+      plane.dcd = max(0, plane.dcd - 1);
+      if(plane.dash) {
+        let dv = sqrt(sq(plane.dvx) + sq(plane.dvy));
+        dv *= 0.9;
+        plane.dvx = cos(plane.a) * dv;
+        plane.dvy = sin(plane.a) * dv;
+        plane.x += plane.dvx;
+        plane.y += plane.dvy;
+        if(dv <= 5*screenScale) {
+          plane.dash = false;
+        }
+      }
       plane.x += cos(plane.a) * 5*screenScale;
       plane.y += sin(plane.a) * 5*screenScale;
       plane.bgx -= cos(plane.a) * 0.5*screenScale;
@@ -598,6 +646,8 @@ function draw() {
   theShader.setUniform('uPlaneAngle', plane.a);
   theShader.setUniform('uPlaneDead', plane.dead != -1);
   theShader.setUniform('uScreenScale', screenScale);
+  theShader.setUniform('uMouse', [mouseX, height-mouseY]);
+  theShader.setUniform('uReload', DASHCOOLDOWN-plane.dcd);
   
   sbGraphics.noStroke();
   sbGraphics.ellipseMode(CENTER);
@@ -623,8 +673,20 @@ function draw() {
   inactiveText.fill(255);
   inactiveText.textAlign(CENTER, CENTER);
   inactiveText.textSize(30*screenScale);
-  inactiveText.text("This game demonstrates GPU shaders\nas well as other game elements", width/2, 200*screenScale);
-  inactiveText.text("Collect the coins while avoiding the missiles.\n\nPress any key to play or pause.", width/2, height-200*screenScale);
+  inactiveText.text(`
+  This game's graphics are built entirely with shaders.
+  There is a versatile particle system, animated coins,
+  and detailed terrain all drawn solely with math.
+  Textures used for the plane and the missiles along with
+  the plane's blinking lights bring more detail to the game.
+  `, width/2, 200*screenScale);
+  inactiveText.text(`
+  Collecting coins will send them to the scorebar as red coins.
+  Three of the same color of coin will merge together to make a new color.
+  Getting hit by a missile will reset the game so be sure to dodge.
+  The plane turns towards the cursor and clicking the mouse will give
+  the plane a boost. Press any key to play or pause.
+  `, width/2, height-200*screenScale);
   theShader.setUniform('uInactive', inactiveText);
   theShader.setUniform('uActiveFade', activeFade);
   
@@ -657,7 +719,6 @@ function lerpAngle(a, b, v) {
 
 function windowResized() {
   resizeCanvas(window.innerWidth, window.innerHeight);
-  screenScale = screen.height / 768;
   sbGraphics = createGraphics(width, 30*screenScale, P2D);
   inactiveText = createGraphics(width, height, P2D);
   if(plane.x > width) {
