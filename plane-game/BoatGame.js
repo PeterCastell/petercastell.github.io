@@ -487,6 +487,7 @@ class ArrayImage {
 }
 
 function draw() {
+  let resScale = ceil(window.devicePixelRatio);
   if(active) {
     activeFade = lerp(activeFade, 0, 0.5);
   }
@@ -601,8 +602,8 @@ function draw() {
             particles.push(newParticle(missiles[i].x, missiles[i].y, 10, color(0)));
           }
         }
-        MAImg.setValue(i, 0, missiles[i].x + 100);
-        MAImg.setValue(i, 1, missiles[i].y + 100);
+        MAImg.setValue(i, 0, missiles[i].x*resScale + 100);
+        MAImg.setValue(i, 1, missiles[i].y*resScale + 100);
         MAImg.setValue(i, 2, (missiles[i].a+PI)*10000);
         if(active) {
           missiles[i].t++;
@@ -612,8 +613,8 @@ function draw() {
     }
     if(particles.length > 0) {
       for(let i = particles.length-1; i >= 0; i--) {
-        PAImg.setValue(i, 0, particles[i].x);
-        PAImg.setValue(i, 1, particles[i].y);
+        PAImg.setValue(i, 0, particles[i].x*resScale);
+        PAImg.setValue(i, 1, particles[i].y*resScale);
         PAImg.setValue(i, 2, particles[i].t);
         PAImg.setValue(i, 3, particles[i].s);
         PAImg.setValue(i, 4, particles[i].sp);
@@ -624,8 +625,8 @@ function draw() {
     }
     if(coins.length > 0) {
       for(let i = coins.length-1; i >= 0; i--) {
-        CAImg.setValue(i, 0, coins[i].x);
-        CAImg.setValue(i, 1, coins[i].y);
+        CAImg.setValue(i, 0, coins[i].x*resScale);
+        CAImg.setValue(i, 1, coins[i].y*resScale);
         CAImg.setValue(i, 2, coins[i].t);
         CAImg.setValue(i, 3, coins[i].d);
         coins[i].t++;
@@ -637,16 +638,16 @@ function draw() {
   theShader.setUniform('uNumParticles', particles.length);
   theShader.setUniform('uNumCoins', coins.length);
   theShader.setUniform('uNumMissiles', missiles.length);
-  theShader.setUniform('uResolution', [width, height]);
-  theShader.setUniform('uPlanePos', [plane.x, height-plane.y]);
-  theShader.setUniform('uBGPos', [plane.bgx, height-plane.bgy]);
+  theShader.setUniform('uResolution', [width*resScale, height*resScale]);
+  theShader.setUniform('uPlanePos', [plane.x*resScale, (height-plane.y)*resScale]);
+  theShader.setUniform('uBGPos', [plane.bgx*resScale, (height-plane.bgy)*resScale]);
   theShader.setUniform('uMissile', missileImg);
   theShader.setUniform('uPlane', plane.img);
   theShader.setUniform('uPlaneProp', plane.propImg);
   theShader.setUniform('uPlaneAngle', plane.a);
   theShader.setUniform('uPlaneDead', plane.dead != -1);
-  theShader.setUniform('uScreenScale', screenScale);
-  theShader.setUniform('uMouse', [mouseX, height-mouseY]);
+  theShader.setUniform('uScreenScale', screenScale*resScale);
+  theShader.setUniform('uMouse', [mouseX*resScale, (height-mouseY)*resScale]);
   theShader.setUniform('uReload', DASHCOOLDOWN-plane.dcd);
   
   sbGraphics.noStroke();
@@ -694,7 +695,7 @@ function draw() {
   shader(theShader);
   noStroke();
   fill(0, 0, 200);
-  rect(0, 0, width, height);
+  rect(0, 0, 1, 1);
   resetShader();
   while(particles.length > 0) {
     if(particles[0].t >= 60) {
