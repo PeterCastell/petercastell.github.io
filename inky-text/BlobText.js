@@ -114,13 +114,13 @@ function draw() {
   theShader.setUniform('uTexture1', img1);
   theShader.setUniform('uTexture2', img2);
   theShader.setUniform('uTexture3', img3);
-  theShader.setUniform('uWidth', width);
-  theShader.setUniform('uHeight', height);
+  theShader.setUniform('uWidth', width*pow(window.devicePixelRatio, 3));
+  theShader.setUniform('uHeight', height*pow(window.devicePixelRatio, 3));
   theShader.setUniform('uMouse', [mouseX, mouseY]);
   theShader.setUniform('uBall1', ball1.uniform());
   theShader.setUniform('uBall2', ball2.uniform());
   theShader.setUniform('uBall3', ball3.uniform());
-  theShader.setUniform('uScreenScale', screenScale);
+  theShader.setUniform('uScreenScale', screenScale*window.devicePixelRatio);
   shader(theShader);
   rect(0, 0, width, height);
 }
