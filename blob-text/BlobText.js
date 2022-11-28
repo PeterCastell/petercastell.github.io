@@ -32,29 +32,37 @@ uniform sampler2D uTexture1;
 uniform sampler2D uTexture2;
 uniform sampler2D uTexture3;
 
-uniform float uWidth;
-uniform float uHeight;
+uniform vec2 uRes;
 
 uniform vec2 uBall1;
 uniform vec2 uBall2;
 uniform vec2 uBall3;
 uniform vec2 uMouse;
 
+uniform float uScreenScale;
+
 float sq(float n){return n*n;}
 
 void main() {
   vec2 st = gl_FragCoord.xy;
-  vec4 color1 = texture2D(uTexture1, vec2((st.x/uWidth)*(uWidth/1055.0), 1.0-(st.y/uHeight)*(uHeight/200.0)));
-  vec4 color2 = texture2D(uTexture2, vec2((st.x/uWidth)*(uWidth/900.0), (1.0-(st.y/uHeight))*(uHeight/200.0)));
-  vec4 color3 = texture2D(uTexture3, vec2(0.5-((uMouse.x/uWidth)-(st.x/uWidth))*(uWidth/615.0), 0.5+(1.0-(uMouse.y/uHeight)-(st.y/uHeight))*(uHeight/200.0)));
   
-  float b1 = 225.0/sqrt(pow(uBall1.x-st.x, 2.0) + pow(uHeight-uBall1.y - st.y, 2.0));
-  float b2 = 225.0/sqrt(pow(uBall2.x-st.x, 2.0) + pow(uHeight-uBall2.y - st.y, 2.0));
-  float b3 = 225.0/sqrt(pow(uBall3.x-st.x, 2.0) + pow(uHeight-uBall3.y - st.y, 2.0));
+  vec2 uv1 = st/vec2(723.0, 280.0)/uScreenScale;
+  uv1.y = 1.-uv1.y;
+  vec2 uv2 = vec2(st.x, uRes.y-st.y)/vec2(522.0, 280.0)/uScreenScale;
+  vec2 uv3 = (st-vec2(uMouse.x, uRes.y-uMouse.y))/vec2(590.0, 280.0)/uScreenScale;
+  uv3 = vec2(0.5, 0.5) - uv3*vec2(-1, 1);
+  
+  vec4 color1 = texture2D(uTexture1, uv1);
+  vec4 color2 = texture2D(uTexture2, uv2);
+  vec4 color3 = texture2D(uTexture3, uv3);
+  
+  float b1 = (300.*uScreenScale)/sqrt(pow(uBall1.x-st.x, 2.0) + pow(uRes.y-uBall1.y - st.y, 2.0));
+  float b2 = (300.*uScreenScale)/sqrt(pow(uBall2.x-st.x, 2.0) + pow(uRes.y-uBall2.y - st.y, 2.0));
+  float b3 = (300.*uScreenScale)/sqrt(pow(uBall3.x-st.x, 2.0) + pow(uRes.y-uBall3.y - st.y, 2.0));
   float v1 = 1.0/color1.r;
   float v2 = 1.0/color2.r;
   float v3 = 1.0/color3.r;
-  if(v1+v2+v3+b1+b2+b3 >= 10.0) {
+  if(v1+v2+v3+b1+b2+b3 >= 12.) {
     gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
   }
   else {
@@ -66,19 +74,25 @@ void main() {
 `;
 
 function preload() {
-  img1 = loadImage("distMap1.png");
-  img2 = loadImage("distMap2.png");
-  img3 = loadImage("distMap3.png");
+  img1 = loadImage("dist_field_CANADA.png");
+  img2 = loadImage("dist_field_SHAD.png");
+  img3 = loadImage("dist_field_PETER.png");
 }
 function setup() {
   document.title = "Inky Text";
-  createCanvas(windowWidth, windowHeight, WEBGL);
-  document.getElementById('defaultCanvas0').style.cursor = "none";
+  document.body.style.background = '#000000';
+  createCanvas(window.innerWidth, window.innerHeight, WEBGL);
+  screenScale = screen.height / 768;
+  //document.getElementById('defaultCanvas0').style.cursor = "none";
   theShader = createShader(vert, frag);
   noStroke();
   ball1 = new Ball();
   ball2 = new Ball();
   ball3 = new Ball();
+}
+function windowResized() {
+  let mult = window.devicePixelRatio;
+  resizeCanvas(window.innerWidth*mult, window.innerHeight*mult);
 }
 class Ball {
   constructor() {
@@ -99,32 +113,25 @@ class Ball {
       this.vy *= -1;
     }
   }
-  uniform() {
-    return [this.x, this.y];
+  uniform(resScale) {
+    return [this.x*resScale, this.y*resScale];
   }
 }
 function sign(n){return n/abs(n);}
 function draw() {
+  let resScale = ceil(window.devicePixelRatio);
   ball1.update();
   ball2.update();
   ball3.update();
   theShader.setUniform('uTexture1', img1);
   theShader.setUniform('uTexture2', img2);
   theShader.setUniform('uTexture3', img3);
-  theShader.setUniform('uWidth', width);
-  theShader.setUniform('uHeight', height);
-  theShader.setUniform('uMouse', [mouseX, mouseY]);
-  theShader.setUniform('uBall1', ball1.uniform());
-  theShader.setUniform('uBall2', ball2.uniform());
-  theShader.setUniform('uBall3', ball3.uniform());
+  theShader.setUniform('uRes', [width*resScale, height*resScale]);
+  theShader.setUniform('uMouse', [mouseX*resScale, mouseY*resScale]);
+  theShader.setUniform('uBall1', ball1.uniform(resScale));
+  theShader.setUniform('uBall2', ball2.uniform(resScale));
+  theShader.setUniform('uBall3', ball3.uniform(resScale));
+  theShader.setUniform('uScreenScale', screenScale*resScale);
   shader(theShader);
-  rect(0, 0, width, height);
-}
-
-function mousePressed() {
-  time = 0;
-}
-
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
+  rect(0, 0, 1, 1);
 }
