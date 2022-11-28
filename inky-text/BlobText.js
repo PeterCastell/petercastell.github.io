@@ -74,6 +74,7 @@ function preload() {
 }
 function setup() {
   document.title = "Inky Text";
+  document.body.style.background = '#000000';
   createCanvas(window.innerWidth, window.innerHeight, WEBGL);
   screenScale = screen.height / 768;
   document.getElementById('defaultCanvas0').style.cursor = "none";
@@ -82,6 +83,10 @@ function setup() {
   ball1 = new Ball();
   ball2 = new Ball();
   ball3 = new Ball();
+}
+function windowResized() {
+  let mult = window.devicePixelRatio;
+  resizeCanvas(window.innerWidth*mult, window.innerHeight*mult);
 }
 class Ball {
   constructor() {
@@ -102,33 +107,26 @@ class Ball {
       this.vy *= -1;
     }
   }
-  uniform() {
-    return [this.x, this.y];
+  uniform(resScale) {
+    return [this.x*resScale, this.y*resScale];
   }
 }
 function sign(n){return n/abs(n);}
 function draw() {
+  let resScale = ceil(window.devicePixelRatio);
   ball1.update();
   ball2.update();
   ball3.update();
   theShader.setUniform('uTexture1', img1);
   theShader.setUniform('uTexture2', img2);
   theShader.setUniform('uTexture3', img3);
-  theShader.setUniform('uWidth', width*pow(window.devicePixelRatio, 3));
-  theShader.setUniform('uHeight', height*pow(window.devicePixelRatio, 3));
-  theShader.setUniform('uMouse', [mouseX, mouseY]);
-  theShader.setUniform('uBall1', ball1.uniform());
-  theShader.setUniform('uBall2', ball2.uniform());
-  theShader.setUniform('uBall3', ball3.uniform());
-  theShader.setUniform('uScreenScale', screenScale*window.devicePixelRatio);
+  theShader.setUniform('uWidth', width*resScale);
+  theShader.setUniform('uHeight', height*resScale);
+  theShader.setUniform('uMouse', [mouseX*resScale, mouseY*resScale]);
+  theShader.setUniform('uBall1', ball1.uniform(resScale));
+  theShader.setUniform('uBall2', ball2.uniform(resScale));
+  theShader.setUniform('uBall3', ball3.uniform(resScale));
+  theShader.setUniform('uScreenScale', screenScale*resScale);
   shader(theShader);
-  rect(0, 0, width, height);
-}
-
-function mousePressed() {
-  time = 0;
-}
-
-function windowResized() {
-  resizeCanvas(window.innerWidth, window.innerHeight);
+  rect(0, 0, 1, 1);
 }
