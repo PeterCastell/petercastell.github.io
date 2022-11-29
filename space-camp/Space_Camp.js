@@ -34,13 +34,12 @@ function draw() {
   textSize(25*screenScale);
   textAlign(LEFT, BOTTOM);
   text(`
-  August last summer, I travelled to Huntsville, Alabama to attend the Advanced Space Academy program at
-  the U.S. Space and Rocket Center. I worked in a team of 11 to complete chalenges and activities relating
+  Last summer I travelled to Huntsville, Alabama to attend the Advanced Space Academy program at
+  the U.S. Space and Rocket Center. I worked on a team of 11 to complete chalenges and activities relating
   to engineering and space flight.
   `.fm(), 50*screenScale, 275*screenScale);
   
-  smartImage('team', 50*screenScale, 300*screenScale, (3300/5)*screenScale, (2550/5)*screenScale, 'My Space Camp team. (I am fourth from the right)');
-  
+  smartImage('team', 50*screenScale, 300*screenScale, (3300/5)*screenScale, (2550/5)*screenScale, '');
   
   textSize(25*screenScale);
   textAlign(RIGHT, TOP);
@@ -58,9 +57,9 @@ function draw() {
   text(`
   One kind of activity I did with my
   group was mission simulations.
-  In this mission, veryone was
-  assigned a role in Mission Control,
-  the Artemis rocket, or on Phobos
+  In this mission, everyone was assigned
+  a role in either Mission Control,
+  the Artemis rocket or on Phobos
   station. I took the role of commander
   on the Artemis and lead the crew to
   the Mars ground base and back.
@@ -102,7 +101,7 @@ function draw() {
   textAlign(RIGHT, TOP);
   fill('#DCD8D9');
   text(`
-  At the end of my week at Space Camp, my team
+  At the end of my week at Space Camp my team
   graduated with the outstanding team award.
   This award is given to the team that
   demonstrated the most colaboration and teamwork.
