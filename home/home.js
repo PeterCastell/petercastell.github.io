@@ -4,6 +4,14 @@ function setup() {
   document.body.style.background = '#36393F';
   screenScale = screen.height/768;
   buttons = [
+    new Button('../go-kart', 'Go-Kart', `
+    Photos and a description
+    of a go-kart I made out of
+    a hoverboard and arduino.`),
+    new Button('../space-camp', 'Space Camp', `
+    Photos and a description of
+    my time in space camp at the
+    US Space and Rocket Center.`),
     new Button('../inky-text', 'Inky Text', `
     A graphical representation of
     distance fields that blends text
@@ -14,14 +22,6 @@ function setup() {
     A game that demonstates
     shader-based graphics and
     gameplay logic.`),
-    new Button('../go-kart', 'Go-Kart', `
-    Photos and a description
-    of a go-kart I made out of
-    a hoverboard and arduino.`),
-    new Button('../space-camp', 'Space Camp', `
-    Photos and a description of
-    my time in space camp at the
-    US Space and Rocket Center.`)
   ];
   
   describingButton = buttons[0];
