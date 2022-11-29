@@ -8,11 +8,11 @@ function setup() {
   
   img_riding_lowres = loadImage('Riding_lowres.jpg');
   img_electronics_lowres = loadImage('Electronics_lowres.jpg');
-  img_arduino_lowres = loadImage('Arduino_lowres.jpg');
+  img_Arduino_lowres = loadImage('Arduino_lowres.jpg');
   
   img_riding = loadImage('Riding.jpg');
   img_electronics = loadImage('Electronics.jpg');
-  img_arduino = loadImage('Arduino.jpg');
+  img_Arduino = loadImage('Arduino.jpg');
   
   String.prototype.fm = function() { return this.trim().replace(/  /g, ''); }
 }
@@ -25,18 +25,18 @@ function draw() {
   fill('#DCD8D9');
   textSize(70*screenScale);
   textAlign(CENTER, CENTER);
-  text("My Hoverboard Go-Kart Project", width/2, 100*screenScale);
+  text("My Go-Kart Project", width/2, 100*screenScale);
   
   textSize(25*screenScale);
   textAlign(LEFT, BOTTOM);
   text(`
-  Last summer, I decided to dissasemble an old, broken hoverboard and use it's parts to create a go-kart.
-  I used the motors, battery, and motherboard in the gokart but I didn't use any of the sensors. I reflashed
+  Last summer, I dissasembled an old, broken hoverboard and used it's parts to create a go-kart.
+  I used the motors, battery and motherboard in the gokart, but I didn't use any of the sensors. I reflashed
   the motherboard with new firmware to make it controllable by external input and connected a joystick.
-  The go-kart is able to reach a top speed of 18 km/h and is very responsive to input.
+  The go-kart has a top speed of 18 km/h and is very responsive to input.
   `.fm(), 50*screenScale, 275*screenScale);
   
-  smartImage('riding', 50*screenScale, 310*screenScale, (1357/2)*screenScale, (657/2)*screenScale, 'Taking the version 3 of go-kart for a test drive.');
+  smartImage('riding', 50*screenScale, 310*screenScale, (1357/2)*screenScale, (657/2)*screenScale, 'Taking version 3 of go-kart for a test drive.');
   
   let labels = [
     {t: 'Ikea chair', x:225, y: 135},
@@ -63,12 +63,12 @@ function draw() {
   The go-kart took multiple itterations to create with improvements being made to the design over time.
   The first version was longer than the one in the photo above and had difficulty turning. That
   was solved in version two by shortening the frame. Version 3 switched the control system from a direct
-  connection between the joystick and the motherboard to an Arduino in between. The Arduino reads data from
-  the joystick and conveys it to the motherboard. While this version didn't change anything for the driver,
+  connection between the joystick and the motherboard to an Arduino in between the two. The Arduino reads data
+  from the joystick and conveys it to the motherboard. While this version didn't change anything for the driver,
   it was essential in preparing for version 4.
   `.fm(), width-50*screenScale, 725*screenScale);
   
-  smartImage('electronics', width-50*screenScale-(1235/2)*screenScale, 950*screenScale, (1235/2)*screenScale, (600/2)*screenScale, 'A diagram of the electronics in version 4');
+  smartImage('electronics', width-50*screenScale-(1235/2)*screenScale, 950*screenScale, (1235/2)*screenScale, (600/2)*screenScale, 'A diagram of the electronics in version 4.');
   labels = [
     {t: 'Charging port', x: 50, y: 35},
     {t: 'Joystick cable', x: 140, y: 55},
@@ -92,12 +92,12 @@ function draw() {
   textAlign(LEFT, TOP);
   fill('#DCD8D9');
   text(`
-  Version 4, the current version, includes a bluetooth chip connnected to the arduino. I made an app
+  Version 4, the current version, includes a bluetooth chip connnected to the Arduino. I made an app
   that allows me to remotely control the go-kart from a phone. The Arduino decides whether
   to be controlled by the joystick or by bluetooth on the fly based on which source is supplying inputs.
   `.fm(), 50*screenScale, 1350*screenScale);
   
-  smartImage('arduino', 50*screenScale, 1500*screenScale, (1357/2)*screenScale, (657/2)*screenScale, 'Close-up diagram of the arduino system in version 4');
+  smartImage('Arduino', 50*screenScale, 1500*screenScale, (1357/2)*screenScale, (657/2)*screenScale, 'Close-up diagram of the Arduino system in version 4.');
   
   labels = [
     {t: 'Input from joystick', x: 530, y: 65},
