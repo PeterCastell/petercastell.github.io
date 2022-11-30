@@ -91,8 +91,7 @@ function setup() {
   ball3 = new Ball();
 }
 function windowResized() {
-  let mult = window.devicePixelRatio;
-  resizeCanvas(window.innerWidth*mult, window.innerHeight*mult);
+  resizeCanvas(window.innerWidth, window.innerHeight);
 }
 class Ball {
   constructor() {
